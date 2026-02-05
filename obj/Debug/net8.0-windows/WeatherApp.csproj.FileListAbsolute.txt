@@ -1,0 +1,17 @@
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.csproj.AssemblyReference.cache
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.AssemblyInfoInputs.cache
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.AssemblyInfo.cs
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.csproj.CoreCompileInputs.cache
+C:\Users\boika\WeatherApp\bin\Debug\net8.0-windows\WeatherApp.exe
+C:\Users\boika\WeatherApp\bin\Debug\net8.0-windows\WeatherApp.deps.json
+C:\Users\boika\WeatherApp\bin\Debug\net8.0-windows\WeatherApp.runtimeconfig.json
+C:\Users\boika\WeatherApp\bin\Debug\net8.0-windows\WeatherApp.dll
+C:\Users\boika\WeatherApp\bin\Debug\net8.0-windows\WeatherApp.pdb
+C:\Users\boika\WeatherApp\bin\Debug\net8.0-windows\Newtonsoft.Json.dll
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.csproj.Up2Date
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.dll
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\refint\WeatherApp.dll
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.pdb
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\WeatherApp.genruntimeconfig.cache
+C:\Users\boika\WeatherApp\obj\Debug\net8.0-windows\ref\WeatherApp.dll
