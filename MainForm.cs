@@ -53,18 +53,20 @@ namespace WeatherApp
             // Navigation buttons
             Button btnDashboard = CreateNavButton("📊 Dashboard", 250);
             Button btnAdvisor = CreateNavButton("🌡️ Advisor", 400);
-            Button btnMap = CreateNavButton("🗺️ Map", 550);
-            Button btnSearch = CreateNavButton("🔍 Search", 700);
+            Button btnSaver = CreateNavButton("💰 Smart Saver", 550);
+            Button btnMap = CreateNavButton("🗺️ Map", 720);
+            Button btnSearch = CreateNavButton("🔍 Search", 870);
 
             btnDashboard.Click += (s, e) => ShowDashboard();
             btnAdvisor.Click += (s, e) => ShowWeatherAdvisor();
+            btnSaver.Click += (s, e) => ShowSmartSaver();
             btnMap.Click += (s, e) => ShowMap();
             btnSearch.Click += (s, e) => ShowSearch();
 
             // City selector
             ComboBox cityCombo = new ComboBox
             {
-                Location = new Point(850, 15),
+                Location = new Point(1020, 15),
                 Size = new Size(200, 30),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.FromArgb(40, 40, 40),
@@ -82,7 +84,7 @@ namespace WeatherApp
             Button refreshBtn = new Button
             {
                 Text = "🔄 Refresh",
-                Location = new Point(1060, 15),
+                Location = new Point(1230, 15),
                 Size = new Size(100, 30),
                 BackColor = Color.FromArgb(0, 150, 255),
                 ForeColor = Color.White,
@@ -93,6 +95,7 @@ namespace WeatherApp
             navPanel.Controls.Add(logo);
             navPanel.Controls.Add(btnDashboard);
             navPanel.Controls.Add(btnAdvisor);
+            navPanel.Controls.Add(btnSaver);
             navPanel.Controls.Add(btnMap);
             navPanel.Controls.Add(btnSearch);
             navPanel.Controls.Add(cityCombo);
@@ -1123,6 +1126,441 @@ namespace WeatherApp
             newFactBtn.Click += (s, e) =>
             {
                 string newFact = AdvisorService.GetRandomWeatherFact(currentWeather);
+                factLabel.Text = newFact;
+            };
+
+            panel.Controls.Add(newFactBtn);
+
+            return panel;
+        }
+
+        private void ShowSmartSaver()
+        {
+            if (currentWeather == null)
+            {
+                MessageBox.Show("Please wait for weather data to load first.", "Weather Data Loading", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            ClearCurrentPage();
+            currentPage = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(30, 30, 30),
+                AutoScroll = true,
+                Name = "smartsaver"
+            };
+
+            // Create scrollable content panel
+            Panel contentPanel = new Panel
+            {
+                Location = new Point(30, 0),
+                Size = new Size(1100, 2800),
+                BackColor = Color.FromArgb(30, 30, 30)
+            };
+
+            int yPosition = 20;
+
+            // Header
+            Label header = new Label
+            {
+                Text = $"💰 Smart Saver - {currentWeather.City}",
+                Font = new Font("Segoe UI", 24, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 200, 100),
+                Location = new Point(0, yPosition),
+                Size = new Size(900, 50),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            contentPanel.Controls.Add(header);
+            yPosition += 60;
+
+            // Tagline
+            Label tagline = new Label
+            {
+                Text = "Let the weather help you save money and the planet",
+                Font = new Font("Segoe UI", 14, FontStyle.Italic),
+                ForeColor = Color.FromArgb(180, 180, 180),
+                Location = new Point(0, yPosition),
+                Size = new Size(900, 30),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            contentPanel.Controls.Add(tagline);
+            yPosition += 50;
+
+            // Current weather summary
+            Panel weatherSummary = CreateSmartSaverWeatherSummary(0, yPosition);
+            contentPanel.Controls.Add(weatherSummary);
+            yPosition += 100;
+
+            // Get savings opportunities
+            var opportunities = SmartSaverService.GetSavingsOpportunities(currentWeather);
+
+            // Opportunities section title
+            Label oppTitle = new Label
+            {
+                Text = "🌞 TODAY'S SAVINGS OPPORTUNITIES",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = Color.FromArgb(255, 220, 100),
+                Location = new Point(0, yPosition),
+                Size = new Size(900, 35)
+            };
+            contentPanel.Controls.Add(oppTitle);
+            yPosition += 45;
+
+            // Create opportunity cards
+            foreach (var opp in opportunities)
+            {
+                Panel oppCard = CreateSavingsOpportunityCard(0, yPosition, opp);
+                contentPanel.Controls.Add(oppCard);
+                yPosition += oppCard.Height + 15;
+            }
+
+            yPosition += 10;
+
+            // Daily summary
+            var dailySummary = SmartSaverService.CalculateDailySummary(opportunities);
+            Panel summaryPanel = CreateDailySummaryPanel(0, yPosition, dailySummary);
+            contentPanel.Controls.Add(summaryPanel);
+            yPosition += summaryPanel.Height + 20;
+
+            // Monthly summary
+            var monthlySummary = SmartSaverService.GetMonthlySummary();
+            Panel monthlyPanel = CreateMonthlySummaryPanel(0, yPosition, monthlySummary);
+            contentPanel.Controls.Add(monthlyPanel);
+            yPosition += monthlyPanel.Height + 20;
+
+            // Fun fact
+            Panel factPanel = CreateSavingsFactPanel(0, yPosition);
+            contentPanel.Controls.Add(factPanel);
+
+            currentPage.Controls.Add(contentPanel);
+            this.Controls.Add(currentPage);
+            currentPage.BringToFront();
+        }
+
+        private Panel CreateSmartSaverWeatherSummary(int x, int yPos)
+        {
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 80),
+                BackColor = Color.FromArgb(40, 40, 40),
+                Padding = new Padding(20)
+            };
+
+            string weatherIcon = GetWeatherIcon(currentWeather.WeatherIcon);
+            
+            Label summaryLabel = new Label
+            {
+                Text = $"{weatherIcon} {currentWeather.Temperature:F1}°C - {currentWeather.WeatherDescription}\n" +
+                       $"Wind: {currentWeather.WindSpeed} m/s | Humidity: {currentWeather.Humidity}%",
+                Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = false,
+                Size = new Size(860, 50),
+                Location = new Point(0, 0)
+            };
+
+            panel.Controls.Add(summaryLabel);
+            return panel;
+        }
+
+        private Panel CreateSavingsOpportunityCard(int x, int yPos, SavingsOpportunity opp)
+        {
+            Panel card = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 160),
+                BackColor = Color.FromArgb(45, 55, 45),
+                Padding = new Padding(20)
+            };
+
+            // Icon and Title
+            Label iconTitle = new Label
+            {
+                Text = $"{opp.Icon} {opp.Title}",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 255, 150),
+                Location = new Point(0, 0),
+                Size = new Size(860, 30)
+            };
+            card.Controls.Add(iconTitle);
+
+            // Description
+            Label description = new Label
+            {
+                Text = opp.Description,
+                Font = new Font("Segoe UI", 11, FontStyle.Italic),
+                ForeColor = Color.FromArgb(200, 200, 200),
+                Location = new Point(0, 35),
+                Size = new Size(860, 25)
+            };
+            card.Controls.Add(description);
+
+            // Savings info
+            Label savings = new Label
+            {
+                Text = $"💵 Save: ${opp.MoneySaved:F2}  |  ⚡ Save: {opp.EnergySaved:F1} kWh  |  🌍 Save: {opp.CO2Saved:F1} kg CO₂",
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 220, 255),
+                Location = new Point(0, 65),
+                Size = new Size(860, 30)
+            };
+            card.Controls.Add(savings);
+
+            // Reason
+            Label reason = new Label
+            {
+                Text = "💡 " + opp.Reason,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.FromArgb(255, 220, 150),
+                Location = new Point(0, 95),
+                Size = new Size(860, 25)
+            };
+            card.Controls.Add(reason);
+
+            // Checkbox button
+            Button checkBtn = new Button
+            {
+                Text = opp.IsChecked ? "✓ DOING THIS!" : "[ ✓ I'M DOING THIS ]",
+                Location = new Point(0, 120),
+                Size = new Size(860, 35),
+                BackColor = opp.IsChecked ? Color.FromArgb(50, 150, 50) : Color.FromArgb(70, 70, 70),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            checkBtn.FlatAppearance.BorderSize = 0;
+            checkBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(80, 160, 80);
+            
+            checkBtn.Click += (s, e) =>
+            {
+                opp.IsChecked = !opp.IsChecked;
+                checkBtn.Text = opp.IsChecked ? "✓ DOING THIS!" : "[ ✓ I'M DOING THIS ]";
+                checkBtn.BackColor = opp.IsChecked ? Color.FromArgb(50, 150, 50) : Color.FromArgb(70, 70, 70);
+            };
+
+            card.Controls.Add(checkBtn);
+
+            return card;
+        }
+
+        private Panel CreateDailySummaryPanel(int x, int yPos, DailySummary summary)
+        {
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 150),
+                BackColor = Color.FromArgb(60, 50, 70),
+                Padding = new Padding(20)
+            };
+
+            // Title
+            Label title = new Label
+            {
+                Text = "📊 YOUR POTENTIAL TODAY",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = Color.FromArgb(200, 150, 255),
+                Location = new Point(0, 0),
+                Size = new Size(860, 35)
+            };
+            panel.Controls.Add(title);
+
+            // Money
+            Label money = new Label
+            {
+                Text = $"💵 Total Money: ${summary.TotalMoney:F2}",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 255, 100),
+                Location = new Point(0, 45),
+                Size = new Size(860, 25)
+            };
+            panel.Controls.Add(money);
+
+            // Energy
+            Label energy = new Label
+            {
+                Text = $"⚡ Total Energy: {summary.TotalEnergy:F1} kWh",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(255, 220, 100),
+                Location = new Point(0, 75),
+                Size = new Size(860, 25)
+            };
+            panel.Controls.Add(energy);
+
+            // CO2
+            Label co2 = new Label
+            {
+                Text = $"🌍 Total CO₂: {summary.TotalCO2:F1} kg",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 200, 255),
+                Location = new Point(0, 105),
+                Size = new Size(430, 25)
+            };
+            panel.Controls.Add(co2);
+
+            // Trees equivalent
+            Label trees = new Label
+            {
+                Text = $"🌳 Equivalent to: {summary.TreesEquivalent:F1} trees",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 255, 150),
+                Location = new Point(430, 105),
+                Size = new Size(430, 25)
+            };
+            panel.Controls.Add(trees);
+
+            return panel;
+        }
+
+        private Panel CreateMonthlySummaryPanel(int x, int yPos, MonthlySummary summary)
+        {
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 200),
+                BackColor = Color.FromArgb(50, 60, 50),
+                Padding = new Padding(20)
+            };
+
+            // Title
+            Label title = new Label
+            {
+                Text = "📈 YOUR SAVINGS THIS MONTH",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 255, 150),
+                Location = new Point(0, 0),
+                Size = new Size(860, 35)
+            };
+            panel.Controls.Add(title);
+
+            // Money
+            Label money = new Label
+            {
+                Text = $"💵 Money Saved: ${summary.TotalMoney:F2}",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 255, 100),
+                Location = new Point(0, 45),
+                Size = new Size(860, 25)
+            };
+            panel.Controls.Add(money);
+
+            // Energy
+            Label energy = new Label
+            {
+                Text = $"⚡ Energy Saved: {summary.TotalEnergy:F0} kWh",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(255, 220, 100),
+                Location = new Point(0, 75),
+                Size = new Size(860, 25)
+            };
+            panel.Controls.Add(energy);
+
+            // CO2
+            Label co2 = new Label
+            {
+                Text = $"🌍 CO₂ Prevented: {summary.TotalCO2:F0} kg",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 200, 255),
+                Location = new Point(0, 105),
+                Size = new Size(860, 25)
+            };
+            panel.Controls.Add(co2);
+
+            // Trees
+            Label trees = new Label
+            {
+                Text = $"🌳 Trees Equivalent: {summary.TreesEquivalent:F1} trees 🎉",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 255, 150),
+                Location = new Point(0, 135),
+                Size = new Size(860, 25)
+            };
+            panel.Controls.Add(trees);
+
+            // Streak
+            if (summary.CurrentStreak > 0)
+            {
+                Label streak = new Label
+                {
+                    Text = $"🔥 {summary.CurrentStreak}-Day Streak! Keep it up!",
+                    Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                    ForeColor = Color.FromArgb(255, 150, 50),
+                    Location = new Point(0, 165),
+                    Size = new Size(860, 25)
+                };
+                panel.Controls.Add(streak);
+            }
+
+            return panel;
+        }
+
+        private Panel CreateSavingsFactPanel(int x, int yPos)
+        {
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 230),
+                BackColor = Color.FromArgb(55, 45, 65),
+                Padding = new Padding(20)
+            };
+
+            // Title
+            Label title = new Label
+            {
+                Text = "💡 DID YOU KNOW?",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = Color.FromArgb(200, 150, 255),
+                Location = new Point(0, 0),
+                Size = new Size(700, 35)
+            };
+            panel.Controls.Add(title);
+
+            // Get initial fact
+            string currentFact = SmartSaverService.GetSavingsFact(currentWeather);
+
+            // Fact display panel
+            Panel factDisplayPanel = new Panel
+            {
+                Location = new Point(0, 45),
+                Size = new Size(860, 120),
+                BackColor = Color.FromArgb(75, 65, 95),
+                Padding = new Padding(15)
+            };
+
+            Label factLabel = new Label
+            {
+                Name = "factLabel",
+                Text = currentFact,
+                Font = new Font("Segoe UI", 12),
+                ForeColor = Color.White,
+                Location = new Point(0, 0),
+                Size = new Size(830, 110),
+                AutoSize = false
+            };
+            factDisplayPanel.Controls.Add(factLabel);
+            panel.Controls.Add(factDisplayPanel);
+
+            // "Show Another Fact" button
+            Button newFactBtn = new Button
+            {
+                Text = "🎲 SHOW ANOTHER FACT",
+                Location = new Point(0, 175),
+                Size = new Size(860, 45),
+                BackColor = Color.FromArgb(120, 80, 180),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            newFactBtn.FlatAppearance.BorderSize = 0;
+            newFactBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(140, 100, 200);
+            
+            newFactBtn.Click += (s, e) =>
+            {
+                string newFact = SmartSaverService.GetSavingsFact(currentWeather);
                 factLabel.Text = newFact;
             };
 
