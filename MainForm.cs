@@ -52,17 +52,19 @@ namespace WeatherApp
 
             // Navigation buttons
             Button btnDashboard = CreateNavButton("📊 Dashboard", 250);
-            Button btnMap = CreateNavButton("🗺️ Map", 400);
-            Button btnSearch = CreateNavButton("🔍 Search", 550);
+            Button btnAdvisor = CreateNavButton("🌡️ Advisor", 400);
+            Button btnMap = CreateNavButton("🗺️ Map", 550);
+            Button btnSearch = CreateNavButton("🔍 Search", 700);
 
             btnDashboard.Click += (s, e) => ShowDashboard();
+            btnAdvisor.Click += (s, e) => ShowWeatherAdvisor();
             btnMap.Click += (s, e) => ShowMap();
             btnSearch.Click += (s, e) => ShowSearch();
 
             // City selector
             ComboBox cityCombo = new ComboBox
             {
-                Location = new Point(800, 15),
+                Location = new Point(850, 15),
                 Size = new Size(200, 30),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.FromArgb(40, 40, 40),
@@ -80,7 +82,7 @@ namespace WeatherApp
             Button refreshBtn = new Button
             {
                 Text = "🔄 Refresh",
-                Location = new Point(1010, 15),
+                Location = new Point(1060, 15),
                 Size = new Size(100, 30),
                 BackColor = Color.FromArgb(0, 150, 255),
                 ForeColor = Color.White,
@@ -90,6 +92,7 @@ namespace WeatherApp
 
             navPanel.Controls.Add(logo);
             navPanel.Controls.Add(btnDashboard);
+            navPanel.Controls.Add(btnAdvisor);
             navPanel.Controls.Add(btnMap);
             navPanel.Controls.Add(btnSearch);
             navPanel.Controls.Add(cityCombo);
@@ -726,6 +729,406 @@ namespace WeatherApp
             currentPage.Controls.Add(citiesPanel);
             this.Controls.Add(currentPage);
             currentPage.BringToFront();
+        }
+
+
+        private void ShowWeatherAdvisor()
+        {
+            if (currentWeather == null)
+            {
+                MessageBox.Show("Please wait for weather data to load first.", "Weather Data Loading", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            ClearCurrentPage();
+            currentPage = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(30, 30, 30),
+                AutoScroll = true,
+                Name = "advisor"
+            };
+
+            // Create scrollable content panel
+            Panel contentPanel = new Panel
+            {
+                Location = new Point(30, 0),
+                Size = new Size(1100, 2500),
+                BackColor = Color.FromArgb(30, 30, 30)
+            };
+
+            int yPosition = 20;
+
+            // Header
+            Label header = new Label
+            {
+                Text = $"🌤️ Weather Advisor for {currentWeather.City}",
+                Font = new Font("Segoe UI", 24, FontStyle.Bold),
+                ForeColor = Color.FromArgb(0, 150, 255),
+                Location = new Point(0, yPosition),
+                Size = new Size(900, 50),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            contentPanel.Controls.Add(header);
+            yPosition += 60;
+
+            // Current weather summary
+            Panel weatherSummary = CreateWeatherSummaryPanel(0, yPosition);
+            contentPanel.Controls.Add(weatherSummary);
+            yPosition += 120;
+
+            // Clothing Advice Section
+            Panel clothingPanel = CreateClothingAdvicePanel(0, yPosition);
+            contentPanel.Controls.Add(clothingPanel);
+            yPosition += clothingPanel.Height + 20;
+
+            // Health Advice Section
+            Panel healthPanel = CreateHealthAdvicePanel(0, yPosition);
+            contentPanel.Controls.Add(healthPanel);
+            yPosition += healthPanel.Height + 20;
+
+            // Fun Facts Section
+            Panel funFactsPanel = CreateFunFactsPanel(0, yPosition);
+            contentPanel.Controls.Add(funFactsPanel);
+
+            currentPage.Controls.Add(contentPanel);
+            this.Controls.Add(currentPage);
+            currentPage.BringToFront();
+        }
+
+        private Panel CreateWeatherSummaryPanel(int x, int yPos)
+        {
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 100),
+                BackColor = Color.FromArgb(40, 40, 40),
+                Padding = new Padding(20)
+            };
+
+            string weatherIcon = GetWeatherIcon(currentWeather.WeatherIcon);
+            
+            Label summaryLabel = new Label
+            {
+                Text = $"{weatherIcon} {currentWeather.Temperature:F1}°C - {currentWeather.WeatherDescription}\n" +
+                       $"Feels like: {currentWeather.FeelsLike:F1}°C | Humidity: {currentWeather.Humidity}% | Wind: {currentWeather.WindSpeed} m/s",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = false,
+                Size = new Size(860, 60),
+                Location = new Point(0, 0)
+            };
+
+            panel.Controls.Add(summaryLabel);
+            return panel;
+        }
+
+        private Panel CreateClothingAdvicePanel(int x, int yPos)
+        {
+            var clothingAdvice = AdvisorService.GetClothingAdvice(currentWeather);
+            
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 400),
+                BackColor = Color.FromArgb(45, 45, 60),
+                Padding = new Padding(20)
+            };
+
+            // Title
+            Label title = new Label
+            {
+                Text = "👔 What to Wear",
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 200, 255),
+                Location = new Point(0, 0),
+                Size = new Size(860, 35)
+            };
+            panel.Controls.Add(title);
+
+            // Description
+            Label description = new Label
+            {
+                Text = clothingAdvice.Description,
+                Font = new Font("Segoe UI", 14, FontStyle.Italic),
+                ForeColor = Color.FromArgb(200, 200, 200),
+                Location = new Point(0, 40),
+                Size = new Size(860, 30)
+            };
+            panel.Controls.Add(description);
+
+            // Clothing icons display
+            Panel iconPanel = new Panel
+            {
+                Location = new Point(0, 75),
+                Size = new Size(860, 80),
+                BackColor = Color.FromArgb(60, 60, 80)
+            };
+
+            int iconX = 20;
+            foreach (var emoji in clothingAdvice.ClothingEmojis)
+            {
+                Label iconLabel = new Label
+                {
+                    Text = emoji,
+                    Font = new Font("Segoe UI", 40),
+                    Location = new Point(iconX, 10),
+                    Size = new Size(80, 60),
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                iconPanel.Controls.Add(iconLabel);
+                iconX += 90;
+            }
+            panel.Controls.Add(iconPanel);
+
+            // Main clothing recommendation
+            Label mainClothing = new Label
+            {
+                Text = "👕 Recommended Clothing:\n" + clothingAdvice.MainClothing,
+                Font = new Font("Segoe UI", 12),
+                ForeColor = Color.White,
+                Location = new Point(0, 165),
+                Size = new Size(860, 60),
+                AutoSize = false
+            };
+            panel.Controls.Add(mainClothing);
+
+            // Accessories
+            Label accessories = new Label
+            {
+                Text = "🎒 Accessories:\n" + clothingAdvice.Accessories,
+                Font = new Font("Segoe UI", 12),
+                ForeColor = Color.White,
+                Location = new Point(0, 230),
+                Size = new Size(860, 50),
+                AutoSize = false
+            };
+            panel.Controls.Add(accessories);
+
+            int extraYPos = 285;
+
+            // Extra items (weather-specific)
+            if (!string.IsNullOrEmpty(clothingAdvice.ExtraItems))
+            {
+                Label extraItems = new Label
+                {
+                    Text = clothingAdvice.ExtraItems,
+                    Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                    ForeColor = Color.FromArgb(255, 200, 100),
+                    Location = new Point(0, extraYPos),
+                    Size = new Size(860, 30),
+                    AutoSize = false
+                };
+                panel.Controls.Add(extraItems);
+                extraYPos += 35;
+            }
+
+            // Additional tip
+            if (!string.IsNullOrEmpty(clothingAdvice.AdditionalTip))
+            {
+                Label tip = new Label
+                {
+                    Text = "💡 " + clothingAdvice.AdditionalTip,
+                    Font = new Font("Segoe UI", 11),
+                    ForeColor = Color.FromArgb(150, 220, 150),
+                    Location = new Point(0, extraYPos),
+                    Size = new Size(860, 25),
+                    AutoSize = false
+                };
+                panel.Controls.Add(tip);
+                extraYPos += 30;
+            }
+
+            // UV Protection
+            if (!string.IsNullOrEmpty(clothingAdvice.UVProtection))
+            {
+                Label uvLabel = new Label
+                {
+                    Text = clothingAdvice.UVProtection,
+                    Font = new Font("Segoe UI", 11),
+                    ForeColor = Color.FromArgb(255, 220, 100),
+                    Location = new Point(0, extraYPos),
+                    Size = new Size(860, 25),
+                    AutoSize = false
+                };
+                panel.Controls.Add(uvLabel);
+            }
+
+            return panel;
+        }
+
+        private Panel CreateHealthAdvicePanel(int x, int yPos)
+        {
+            var healthAdvice = AdvisorService.GetHealthAdvice(currentWeather);
+            
+            // Calculate dynamic height based on content
+            int contentHeight = 180 + (healthAdvice.Tips.Count * 35) + (healthAdvice.Warnings.Count * 35);
+            
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, contentHeight),
+                BackColor = Color.FromArgb(45, 60, 45),
+                Padding = new Padding(20)
+            };
+
+            // Title
+            Label title = new Label
+            {
+                Text = "🏥 Health & Safety",
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 255, 150),
+                Location = new Point(0, 0),
+                Size = new Size(860, 35)
+            };
+            panel.Controls.Add(title);
+
+            // Main health advice
+            Label mainAdvice = new Label
+            {
+                Text = healthAdvice.MainAdvice,
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(255, 255, 150),
+                Location = new Point(0, 45),
+                Size = new Size(860, 40),
+                AutoSize = false
+            };
+            panel.Controls.Add(mainAdvice);
+
+            int itemYPos = 95;
+
+            // Health tips
+            Label tipsHeader = new Label
+            {
+                Text = "📋 Health Tips:",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 255, 200),
+                Location = new Point(0, itemYPos),
+                Size = new Size(860, 30)
+            };
+            panel.Controls.Add(tipsHeader);
+            itemYPos += 35;
+
+            foreach (var tip in healthAdvice.Tips)
+            {
+                Label tipLabel = new Label
+                {
+                    Text = "  • " + tip,
+                    Font = new Font("Segoe UI", 11),
+                    ForeColor = Color.White,
+                    Location = new Point(0, itemYPos),
+                    Size = new Size(860, 30),
+                    AutoSize = false
+                };
+                panel.Controls.Add(tipLabel);
+                itemYPos += 35;
+            }
+
+            // Warnings (if any)
+            if (healthAdvice.Warnings.Count > 0)
+            {
+                itemYPos += 10;
+                Label warningsHeader = new Label
+                {
+                    Text = "⚠️ Important Warnings:",
+                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                    ForeColor = Color.FromArgb(255, 100, 100),
+                    Location = new Point(0, itemYPos),
+                    Size = new Size(860, 30)
+                };
+                panel.Controls.Add(warningsHeader);
+                itemYPos += 35;
+
+                foreach (var warning in healthAdvice.Warnings)
+                {
+                    Label warningLabel = new Label
+                    {
+                        Text = "  ⚠ " + warning,
+                        Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(255, 150, 150),
+                        Location = new Point(0, itemYPos),
+                        Size = new Size(860, 30),
+                        AutoSize = false
+                    };
+                    panel.Controls.Add(warningLabel);
+                    itemYPos += 35;
+                }
+            }
+
+            return panel;
+        }
+
+        private Panel CreateFunFactsPanel(int x, int yPos)
+        {
+            Panel panel = new Panel
+            {
+                Location = new Point(x, yPos),
+                Size = new Size(900, 250),
+                BackColor = Color.FromArgb(50, 40, 60),
+                Padding = new Padding(20)
+            };
+
+            // Title
+            Label title = new Label
+            {
+                Text = "🎓 Weather Facts",
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = Color.FromArgb(200, 150, 255),
+                Location = new Point(0, 0),
+                Size = new Size(700, 35)
+            };
+            panel.Controls.Add(title);
+
+            // Get initial fact
+            string currentFact = AdvisorService.GetRandomWeatherFact(currentWeather);
+
+            // Fact display panel
+            Panel factDisplayPanel = new Panel
+            {
+                Location = new Point(0, 45),
+                Size = new Size(860, 130),
+                BackColor = Color.FromArgb(70, 60, 90),
+                Padding = new Padding(15)
+            };
+
+            Label factLabel = new Label
+            {
+                Name = "factLabel",
+                Text = currentFact,
+                Font = new Font("Segoe UI", 13),
+                ForeColor = Color.White,
+                Location = new Point(0, 0),
+                Size = new Size(830, 120),
+                AutoSize = false
+            };
+            factDisplayPanel.Controls.Add(factLabel);
+            panel.Controls.Add(factDisplayPanel);
+
+            // "Get Another Fact" button
+            Button newFactBtn = new Button
+            {
+                Text = "🎲 Did You Know? (Click for another fact!)",
+                Location = new Point(0, 185),
+                Size = new Size(860, 45),
+                BackColor = Color.FromArgb(100, 80, 150),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            newFactBtn.FlatAppearance.BorderSize = 0;
+            newFactBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(120, 100, 180);
+            
+            newFactBtn.Click += (s, e) =>
+            {
+                string newFact = AdvisorService.GetRandomWeatherFact(currentWeather);
+                factLabel.Text = newFact;
+            };
+
+            panel.Controls.Add(newFactBtn);
+
+            return panel;
         }
 
         private void ClearCurrentPage()
